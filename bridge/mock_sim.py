@@ -4,72 +4,83 @@ Generates realistic rover telemetry without Isaac Sim.
 Used for frontend development on machines without an NVIDIA GPU.
 """
 
+from __future__ import annotations
+
 import math
 import time
 import random
 from typing import Any
 
+from simulation.core.catalog import (
+    DEFAULT_ROVER_TYPE,
+    DEFAULT_TERRAIN,
+    ROVER_WHEEL_COUNTS,
+    TERRAINS,
+)
+from simulation.core.simulation_interface import SimulationBackend
 
-class MockSimulation:
-    TERRAINS = {
-        "mars": {
-            "gravity": -3.72,
-            "gps_lat": -4.5895,
-            "gps_lon": 137.4417,
-            "gps_alt": -4500.0,
-            "description": "Gale Crater, Mars",
-        },
-        "moon": {
-            "gravity": -1.62,
-            "gps_lat": 0.6741,
-            "gps_lon": 23.4733,
-            "gps_alt": 0.0,
-            "description": "Mare Tranquillitatis, Moon",
-        },
-        "asteroid": {
-            "gravity": -0.003,
-            "gps_lat": 0.0,
-            "gps_lon": 0.0,
-            "gps_alt": 0.0,
-            "description": "433 Eros",
-        },
-        "earth": {
-            "gravity": -9.81,
-            "gps_lat": 35.3606,
-            "gps_lon": -116.8895,
-            "gps_alt": 900.0,
-            "description": "Mojave Desert, California",
-        },
-    }
 
-    ROVER_WHEEL_COUNTS = {
-        "rocker_bogie": 6,
-        "skid_steer": 4,
-    }
+class MockSimulation(SimulationBackend):
+    mode = "mock"
 
     def __init__(self):
         self.t = 0.0
-        self.terrain = "mars"
-        self.rover_type = "rocker_bogie"
+        self.terrain = DEFAULT_TERRAIN
+        self.rover_type = DEFAULT_ROVER_TYPE
         self.episode = 0
         self.step = 0
         self.cumulative_reward = 0.0
         self.is_training = False
         self.speed = 0.08  # m/s — realistic for planetary rover (~0.08 m/s avg)
+        self._running = False
+
+    @property
+    def ready(self) -> bool:
+        return self._running
+
+    def start(self) -> None:
+        self._running = True
+
+    def stop(self) -> None:
+        self._running = False
 
     def set_terrain(self, terrain: str):
-        if terrain in self.TERRAINS:
+        if terrain in TERRAINS:
             self.terrain = terrain
             self.t = 0.0
 
     def set_rover(self, rover_type: str):
-        if rover_type in self.ROVER_WHEEL_COUNTS:
+        if rover_type in ROVER_WHEEL_COUNTS:
             self.rover_type = rover_type
 
     def set_training(self, active: bool):
         self.is_training = active
         if active and self.step == 0:
             self.episode = 1
+
+    def reset(self) -> None:
+        self.t = 0.0
+        self.step = 0
+        self.episode = 0
+        self.cumulative_reward = 0.0
+        self.is_training = False
+
+    def get_config(self) -> dict[str, Any]:
+        return {
+            "mode": self.mode,
+            "ready": self.ready,
+            "terrain": self.terrain,
+            "rover_type": self.rover_type,
+            "is_training": self.is_training,
+            "available_terrains": list(TERRAINS.keys()),
+            "available_rovers": list(ROVER_WHEEL_COUNTS.keys()),
+        }
+
+    def get_health(self) -> dict[str, Any]:
+        return {
+            "backend_status": "streaming_mock_data" if self.ready else "stopped",
+            "ready": self.ready,
+        }
 
     def _figure_eight(self, t: float, scale: float = 8.0):
         """Lemniscate of Bernoulli path."""
@@ -91,8 +102,11 @@ class MockSimulation:
             ranges.append(round(max(0.3, min(50.0, base + noise)), 3))
         return ranges
 
-    def tick(self) -> dict[str, Any]:
-        td = self.TERRAINS[self.terrain]
+    def tick(self) -> dict[str, Any] | None:
+        if not self._running:
+            return None
+
+        td = TERRAINS[self.terrain]
         gravity = td["gravity"]
 
         x, y, yaw = self._figure_eight(self.t)
@@ -102,7 +116,7 @@ class MockSimulation:
         roll = 0.025 * math.cos(self.t * 1.7 + 1.2)
 
         speed = self.speed * (0.9 + 0.1 * random.random())
-        wheel_count = self.ROVER_WHEEL_COUNTS.get(self.rover_type, 4)
+        wheel_count = ROVER_WHEEL_COUNTS.get(self.rover_type, 4)
         wheel_speeds = [round(speed + random.gauss(0, 0.003), 5) for _ in range(wheel_count)]
 
         accel = {

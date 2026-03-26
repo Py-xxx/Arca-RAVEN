@@ -1,36 +1,67 @@
 """
 Arca RAVEN — Bridge Server
-FastAPI + WebSocket backend. Runs in mock mode by default.
-Isaac Sim integration added in Phase 2.
+FastAPI + WebSocket backend.
+Defaults to Isaac Sim mode and stays idle until live telemetry is available.
 """
 
+from __future__ import annotations
+
 import asyncio
-import logging
 import json
+import logging
+import sys
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 
+BRIDGE_DIR = Path(__file__).resolve().parent
+ROOT = Path(__file__).resolve().parents[1]
+for path in (BRIDGE_DIR, ROOT):
+    path_str = str(path)
+    if path_str not in sys.path:
+        sys.path.insert(0, path_str)
+
+from settings import BridgeSettings
 from mock_sim import MockSimulation
 from websocket_manager import ConnectionManager
+from simulation.core.isaac_sim_manager import IsaacSimManager
+from simulation.core.simulation_interface import SimulationBackend
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(name)s] %(levelname)s: %(message)s")
 logger = logging.getLogger("raven.server")
 
-SIM_HZ = 20  # ticks per second
+SETTINGS = BridgeSettings.from_env()
+SIM_HZ = SETTINGS.sim_hz  # ticks per second
 SIM_INTERVAL = 1.0 / SIM_HZ
 
-sim = MockSimulation()
 manager = ConnectionManager()
+
+
+def create_simulation_backend() -> SimulationBackend:
+    if SETTINGS.sim_mode == "mock":
+        logger.warning("Bridge started in mock mode; set RAVEN_SIM_MODE=isaac for live data only.")
+        return MockSimulation()
+
+    return IsaacSimManager(
+        isaac_sim_path=SETTINGS.isaac_sim_path,
+        headless=SETTINGS.isaac_headless,
+        auto_launch=SETTINGS.isaac_auto_launch,
+    )
+
+
+sim = create_simulation_backend()
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    sim.start()
     task = asyncio.create_task(simulation_loop())
-    logger.info("Arca RAVEN bridge server started (mock mode)")
+    logger.info("Arca RAVEN bridge server started (mode=%s)", sim.mode)
     yield
     task.cancel()
+    sim.stop()
     logger.info("Bridge server stopped")
 
 
@@ -50,36 +81,37 @@ async def simulation_loop():
     while True:
         if manager.count > 0:
             state = sim.tick()
-            await manager.broadcast(state)
+            if state is not None:
+                await manager.broadcast(state)
         await asyncio.sleep(SIM_INTERVAL)
 
 
 @app.get("/health")
 async def health():
-    return {"status": "ok", "mode": "mock", "clients": manager.count, "hz": SIM_HZ}
+    return {
+        "status": "ok",
+        "mode": sim.mode,
+        "clients": manager.count,
+        "hz": SIM_HZ,
+        **sim.get_health(),
+    }
 
 
 @app.get("/config")
 async def get_config():
-    return {
-        "terrain": sim.terrain,
-        "rover_type": sim.rover_type,
-        "is_training": sim.is_training,
-        "available_terrains": list(MockSimulation.TERRAINS.keys()),
-        "available_rovers": list(MockSimulation.ROVER_WHEEL_COUNTS.keys()),
-    }
+    return sim.get_config()
 
 
 @app.post("/config/terrain/{terrain}")
 async def set_terrain(terrain: str):
     sim.set_terrain(terrain)
-    return {"terrain": sim.terrain}
+    return {"terrain": sim.get_config()["terrain"]}
 
 
 @app.post("/config/rover/{rover_type}")
 async def set_rover(rover_type: str):
     sim.set_rover(rover_type)
-    return {"rover_type": sim.rover_type}
+    return {"rover_type": sim.get_config()["rover_type"]}
 
 
 @app.post("/training/start")
@@ -96,11 +128,7 @@ async def stop_training():
 
 @app.post("/simulation/reset")
 async def reset_simulation():
-    sim.t = 0.0
-    sim.step = 0
-    sim.episode = 0
-    sim.cumulative_reward = 0.0
-    sim.is_training = False
+    sim.reset()
     return {"status": "reset"}
 
 
@@ -120,10 +148,7 @@ async def websocket_endpoint(websocket: WebSocket):
                 elif msg.get("type") == "set_training":
                     sim.set_training(msg["active"])
                 elif msg.get("type") == "reset":
-                    sim.t = 0.0
-                    sim.step = 0
-                    sim.episode = 0
-                    sim.cumulative_reward = 0.0
+                    sim.reset()
             except json.JSONDecodeError:
                 pass
     except WebSocketDisconnect:

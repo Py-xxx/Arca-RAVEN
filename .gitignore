@@ -56,3 +56,6 @@ models/*.pth
 _isaac_sim/
 omni.log
 kit/
+
+# Resources
+instructions.md
