@@ -21,12 +21,14 @@ This flow does not yet provide live rover telemetry from Isaac Sim. The current 
 Before starting, make sure the Windows PC already has:
 
 - Git
-- Python 3 and `venv`
+- Python `3.12` and `venv`
 - Node.js and npm
 - Rust/Tauri Windows prerequisites
 - Isaac Sim installed locally
 
 ROS 2 in WSL2 is optional for this test flow. It is not required to boot the bridge or frontend.
+
+Do not use Python `3.14` for the bridge right now. The pinned backend dependencies can fail while building `pydantic-core` on Windows with Python `3.14`.
 
 ## 1. Clone the Repository
 
@@ -61,7 +63,7 @@ From the repo root:
 
 ```powershell
 cd bridge
-py -3 -m venv .venv
+py -3.12 -m venv .venv
 .\.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
 python server.py

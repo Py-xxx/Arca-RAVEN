@@ -23,6 +23,7 @@ python server.py
 
 Important:
 
+- Use Python `3.12` for the bridge environment. Python `3.14` currently breaks `pydantic-core` during install on Windows.
 - The bridge defaults to `isaac` mode.
 - Set `ISAAC_SIM_PATH` on the Windows machine before starting the backend if Isaac Sim is not installed in the default location.
 - Use `RAVEN_SIM_MODE=mock` only if you explicitly want the legacy mock backend.
