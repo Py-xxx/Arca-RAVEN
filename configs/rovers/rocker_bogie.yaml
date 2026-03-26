@@ -1,0 +1,47 @@
+name: rocker_bogie
+display_name: "6-Wheel Rocker-Bogie (Curiosity-class)"
+usd_path: assets/rovers/rocker_bogie/rocker_bogie.usd
+urdf_path: assets/rovers/rocker_bogie/rocker_bogie.urdf
+
+mass_kg: 899.0              # Curiosity: 899 kg (scale as needed)
+wheelbase_m: 2.7
+track_width_m: 2.3
+wheel_radius_m: 0.25
+wheel_width_m: 0.4
+ground_clearance_m: 0.6
+max_slope_degrees: 45.0
+
+# Drive system
+motors:
+  count: 6
+  max_torque_nm: 70.0       # Per wheel
+  gear_ratio: 1800.0        # High-reduction planetary gearbox
+  max_wheel_speed_rps: 0.05 # ~3.6 cm/s at full speed (realistic)
+
+# Suspension (passive rocker-bogie)
+suspension:
+  type: rocker_bogie_passive
+  rocker_pivot_height_m: 0.3
+  bogie_pivot_height_m: 0.2
+  max_articulation_degrees: 45.0
+
+sensors:
+  lidar:
+    - model: Ouster_OS1_64
+      mount_position: [0.0, 0.0, 0.5]   # x,y,z from chassis centre
+      mount_rotation: [0.0, 0.0, 0.0]
+  cameras:
+    - model: RealSense_D435_stereo
+      name: front_stereo
+      mount_position: [0.4, 0.0, 0.3]
+      mount_rotation: [0.0, 10.0, 0.0]  # 10° downward tilt
+    - model: RealSense_D435_stereo
+      name: rear_stereo
+      mount_position: [-0.4, 0.0, 0.3]
+      mount_rotation: [0.0, 10.0, 180.0]
+  imu:
+    - model: VectorNav_VN200
+      mount_position: [0.0, 0.0, 0.1]
+  gps:
+    - model: uBlox_F9P
+      mount_position: [0.0, 0.0, 0.55]

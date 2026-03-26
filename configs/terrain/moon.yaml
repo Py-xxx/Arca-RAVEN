@@ -1,0 +1,29 @@
+name: moon
+display_name: "Lunar Surface"
+gravity: -1.62
+atmosphere_density: 0.0
+wind_speed_max: 0.0
+usd_scene: assets/environments/moon/lunar_south_pole_01.usd
+
+soil:
+  model: SCM
+  cohesion: 100.0
+  friction_angle: 42.0    # Lunar regolith is highly angular
+  bekker_n0: 1.0
+  bekker_kphi: 1.4e6
+  bekker_kkappa: 0.0
+  shear_deformation_modulus: 0.018
+
+lighting:
+  sun_intensity: 1361
+  sun_angular_diameter: 0.53
+  sky_colour: [0.0, 0.0, 0.0]   # No atmosphere — pure black
+  ambient: 0.02
+
+terrain:
+  heightmap: assets/terrain/heightmaps/moon/lro_nac_south_pole_5m.tif
+  scale_xy: 400.0
+  scale_z: 30.0
+  rock_density: 0.08
+  rock_size_range: [0.02, 0.8]
+  permanently_shadowed_regions: true

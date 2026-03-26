@@ -1,0 +1,5 @@
+# Isaac Sim is installed via NVIDIA Omniverse Launcher — not pip
+# These are additional packages for the simulation layer
+numpy==1.26.4
+scipy==1.13.1
+pyyaml==6.0.2

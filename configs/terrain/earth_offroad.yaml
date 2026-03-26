@@ -1,0 +1,28 @@
+name: earth_offroad
+display_name: "Earth Off-Road"
+gravity: -9.81
+atmosphere_density: 1.225
+wind_speed_max: 20.0
+usd_scene: assets/environments/earth/rocky_terrain_01.usd
+
+soil:
+  model: SCM
+  cohesion: 500.0
+  friction_angle: 30.0
+  bekker_n0: 0.7
+  bekker_kphi: 2.0e6
+  bekker_kkappa: 2.0e4
+  shear_deformation_modulus: 0.025
+
+lighting:
+  sun_intensity: 1361
+  sky_colour: [0.4, 0.6, 1.0]
+  ambient: 0.35
+
+terrain:
+  heightmap: assets/terrain/heightmaps/earth/rocky_desert_dem_5m.tif
+  scale_xy: 600.0
+  scale_z: 50.0
+  rock_density: 0.05
+  rock_size_range: [0.05, 2.0]
+  vegetation: false

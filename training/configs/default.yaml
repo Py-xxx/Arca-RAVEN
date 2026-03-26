@@ -1,0 +1,61 @@
+# Arca RAVEN — Default Training Configuration
+
+training:
+  algorithm: SAC          # SAC | PPO | TD3
+  total_steps: 5_000_000
+  batch_size: 512
+  learning_rate: 3.0e-4
+  gamma: 0.99
+  tau: 0.005
+  buffer_size: 1_000_000
+  parallel_envs: 64       # Isaac Lab parallel environments
+  eval_freq: 10_000
+  save_freq: 50_000
+
+curriculum:
+  stages:
+    - name: flat
+      terrain_roughness: 0.0
+      max_slope_deg: 2.0
+      rock_density: 0.0
+      min_reward_threshold: 0.6
+    - name: gentle_slopes
+      terrain_roughness: 0.2
+      max_slope_deg: 10.0
+      rock_density: 0.05
+      min_reward_threshold: 0.55
+    - name: rocky
+      terrain_roughness: 0.5
+      max_slope_deg: 20.0
+      rock_density: 0.2
+      min_reward_threshold: 0.5
+    - name: full_hazard
+      terrain_roughness: 1.0
+      max_slope_deg: 30.0
+      rock_density: 0.4
+      min_reward_threshold: 0.45
+
+reward:
+  weights:
+    progress: 1.0
+    tilt_penalty: -2.0
+    wheel_slip: -0.5
+    proximity_hazard: -1.5
+    motor_power: -0.3
+    path_smoothness: 0.2
+
+observation:
+  lidar_rays: 360
+  lidar_max_range: 50.0
+  history_steps: 4         # stack last N observations
+  include_camera: false    # Phase 5+
+
+rover:
+  type: rocker_bogie
+  max_wheel_speed: 0.15    # m/s
+  max_angular_rate: 0.3    # rad/s
+
+environment:
+  terrain: mars
+  episode_length: 500      # steps
+  success_distance: 20.0   # metres from goal

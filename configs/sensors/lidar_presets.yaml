@@ -1,0 +1,25 @@
+# All sensors simulate real-world noise characteristics
+
+Ouster_OS1_64:
+  beams: 64
+  horizontal_resolution: 1024   # points per revolution
+  vertical_fov_deg: [-22.5, 22.5]
+  range_min_m: 0.5
+  range_max_m: 120.0
+  range_noise_stddev_m: 0.015
+  angular_noise_stddev_deg: 0.01
+  scan_frequency_hz: 20.0
+  wavelength_nm: 865
+  isaac_sim_class: "omni.sensors.nv.lidar.Ouster_OS1_64"
+
+Velodyne_VLP16:
+  beams: 16
+  horizontal_resolution: 1800
+  vertical_fov_deg: [-15.0, 15.0]
+  range_min_m: 0.5
+  range_max_m: 100.0
+  range_noise_stddev_m: 0.03
+  angular_noise_stddev_deg: 0.02
+  scan_frequency_hz: 10.0
+  wavelength_nm: 903
+  isaac_sim_class: "omni.sensors.nv.lidar.Velodyne_VLP16"

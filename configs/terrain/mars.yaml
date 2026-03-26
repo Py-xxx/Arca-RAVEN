@@ -1,0 +1,28 @@
+name: mars
+display_name: "Mars Surface"
+gravity: -3.72          # m/s²
+atmosphere_density: 0.020   # kg/m³ (1% of Earth)
+wind_speed_max: 30.0        # m/s (dust storm capable)
+usd_scene: assets/environments/mars/mars_crater_field_01.usd
+
+soil:
+  model: SCM              # Soil Contact Model (Chrono-style via Isaac)
+  cohesion: 170.0         # Pa  — Martian regolith
+  friction_angle: 35.0    # degrees
+  bekker_n0: 0.9
+  bekker_kphi: 8.14e5
+  bekker_kkappa: 4.0e3
+  shear_deformation_modulus: 0.014
+
+lighting:
+  sun_intensity: 590      # W/m²  (Mars receives ~590 vs Earth's 1361)
+  sun_angular_diameter: 0.35  # degrees (smaller from Mars)
+  sky_colour: [0.7, 0.4, 0.2]  # Reddish-orange dust atmosphere
+  ambient: 0.15
+
+terrain:
+  heightmap: assets/terrain/heightmaps/mars/gale_crater_dem_10m.tif
+  scale_xy: 500.0         # metres total extent
+  scale_z: 40.0           # metres height range
+  rock_density: 0.12      # rocks per m²
+  rock_size_range: [0.05, 1.2]  # metres

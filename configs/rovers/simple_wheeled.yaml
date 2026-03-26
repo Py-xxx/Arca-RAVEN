@@ -1,0 +1,36 @@
+name: simple_wheeled
+display_name: "4-Wheel Skid-Steer"
+usd_path: assets/rovers/simple_wheeled/simple_wheeled.usd
+urdf_path: assets/rovers/simple_wheeled/simple_wheeled.urdf
+
+mass_kg: 80.0
+wheelbase_m: 0.6
+track_width_m: 0.5
+wheel_radius_m: 0.12
+wheel_width_m: 0.08
+ground_clearance_m: 0.15
+max_slope_degrees: 30.0
+
+motors:
+  count: 4
+  max_torque_nm: 20.0
+  gear_ratio: 150.0
+  max_wheel_speed_rps: 0.5
+
+suspension:
+  type: independent_spring_damper
+  spring_stiffness: 5000.0
+  damping_coefficient: 200.0
+
+sensors:
+  lidar:
+    - model: Velodyne_VLP16
+      mount_position: [0.0, 0.0, 0.25]
+  cameras:
+    - model: RealSense_D435_stereo
+      name: front_stereo
+      mount_position: [0.25, 0.0, 0.15]
+      mount_rotation: [0.0, 5.0, 0.0]
+  imu:
+    - model: InvenSense_ICM42688
+      mount_position: [0.0, 0.0, 0.05]
